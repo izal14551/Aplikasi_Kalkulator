@@ -1,87 +1,254 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_simple_calculator/flutter_simple_calculator.dart';
+import 'package:math_expressions/math_expressions.dart';
+import 'dart:math';
 
-void main() => runApp(const MyApp());
+void main() {
+  runApp(const CalculatorApp());
+}
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class CalculatorApp extends StatelessWidget {
+  const CalculatorApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('SimpleCalculator'),
+      title: 'SimpleCalculator',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const CalculatorScreen(),
+    );
+  }
+}
+
+class CalculatorScreen extends StatefulWidget {
+  const CalculatorScreen({Key? key}) : super(key: key);
+
+  @override
+  _CalculatorScreenState createState() => _CalculatorScreenState();
+}
+
+class _CalculatorScreenState extends State<CalculatorScreen> {
+  String _output = '';
+  String _expression = '';
+
+  void _onButtonPressed(String buttonText) {
+    setState(() {
+      if (buttonText == 'C') {
+        _output = '';
+        _expression = '';
+      } else if (buttonText == '=') {
+        try {
+          String finalExpression =
+              _expression.replaceAll('×', '*').replaceAll('÷', '/');
+          Expression exp = Parser().parse(finalExpression);
+          ContextModel cm = ContextModel();
+          double result = exp.evaluate(EvaluationType.REAL, cm);
+          _output = _formatResult(result);
+          _expression = _output;
+        } catch (e) {
+          _output = 'Error';
+        }
+      } else if (buttonText == '√') {
+        try {
+          double value = double.parse(_expression);
+          double result = sqrt(value);
+          _output = _formatResult(result);
+          _expression = _output;
+        } catch (e) {
+          _output = 'Error';
+        }
+      } else if (buttonText == 'x²') {
+        try {
+          double value = double.parse(_expression);
+          double result = pow(value, 2) as double;
+          _output = _formatResult(result);
+          _expression = _output;
+        } catch (e) {
+          _output = 'Error';
+        }
+      } else if (buttonText == 'sin') {
+        try {
+          double value = double.parse(_expression);
+          double result = sin(value);
+          _output = _formatResult(result);
+          _expression = _output;
+        } catch (e) {
+          _output = 'Error';
+        }
+      } else if (buttonText == 'cos') {
+        try {
+          double value = double.parse(_expression);
+          double result = cos(value);
+          _output = _formatResult(result);
+          _expression = _output;
+        } catch (e) {
+          _output = 'Error';
+        }
+      } else if (buttonText == 'tan') {
+        try {
+          double value = double.parse(_expression);
+          double result = tan(value);
+          _output = _formatResult(result);
+          _expression = _output;
+        } catch (e) {
+          _output = 'Error';
+        }
+      } else if (buttonText == 'π') {
+        _output = pi.toString();
+        _expression = pi.toString();
+      } else if (buttonText == 'e') {
+        _output = e.toString();
+        _expression = e.toString();
+      } else {
+        _expression += buttonText;
+        _output = _expression;
+      }
+    });
+  }
+
+  String _formatResult(double result) {
+    if (result == result.toInt()) {
+      return result.toInt().toString();
+    } else {
+      return result.toStringAsFixed(2);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('SimpleCalculator'),
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Expanded(
+            flex: 2,
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              alignment: Alignment.centerRight,
+              child: Text(
+                _output,
+                style: const TextStyle(
+                  fontSize: 48.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                double buttonHeight = constraints.maxHeight / 6;
+                double buttonWidth = constraints.maxWidth / 4;
+                return GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _buttonNames.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    childAspectRatio: buttonWidth / buttonHeight,
+                  ),
+                  itemBuilder: (BuildContext context, int index) {
+                    return SizedBox(
+                      height: buttonHeight,
+                      width: buttonWidth,
+                      child: CalculatorButton(
+                        buttonText: _buttonNames[index],
+                        callback: _onButtonPressed,
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CalculatorButton extends StatelessWidget {
+  final String buttonText;
+  final Function(String) callback;
+
+  const CalculatorButton({
+    required this.buttonText,
+    required this.callback,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(1.0),
+      child: TextButton(
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: _getButtonColor(buttonText),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
         ),
-        body: const Padding(
-          padding: EdgeInsets.all(18.0),
-          child: SizedBox(
-            width: double.infinity,
-            child: CalcButton(),
+        onPressed: () => callback(buttonText),
+        child: Text(
+          buttonText,
+          style: const TextStyle(
+            fontSize: 24.0,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
     );
   }
-}
 
-class CalcButton extends StatefulWidget {
-  const CalcButton({Key? key}) : super(key: key);
-
-  @override
-  CalcButtonState createState() => CalcButtonState();
-}
-
-class CalcButtonState extends State<CalcButton> {
-  double? _currentValue = 0;
-  @override
-  Widget build(BuildContext context) {
-    var calc = SimpleCalculator(
-      value: _currentValue!,
-      hideExpression: false,
-      hideSurroundingBorder: true,
-      autofocus: true,
-      onChanged: (key, value, expression) {
-        setState(() {
-          _currentValue = value ?? 0;
-        });
-        if (kDebugMode) {
-          print('$key\t$value\t$expression');
-        }
-      },
-      onTappedDisplay: (value, details) {
-        if (kDebugMode) {
-          print('$value\t${details.globalPosition}');
-        }
-      },
-      theme: const CalculatorThemeData(
-        borderColor: Colors.black,
-        borderWidth: 2,
-        displayColor: Color.fromARGB(255, 236, 231, 231),
-        displayStyle: TextStyle(fontSize: 80, color: Colors.yellow),
-        expressionColor: Color.fromARGB(255, 80, 65, 25),
-        expressionStyle: TextStyle(fontSize: 20, color: Colors.white),
-        operatorColor: Color.fromARGB(255, 240, 219, 31),
-        operatorStyle: TextStyle(fontSize: 30, color: Colors.white),
-        commandColor: Color.fromARGB(255, 148, 115, 6),
-        commandStyle: TextStyle(fontSize: 30, color: Colors.white),
-        numColor: Color.fromARGB(255, 56, 49, 49),
-        numStyle: TextStyle(fontSize: 50, color: Colors.white),
-      ),
-    );
-    return OutlinedButton(
-      child: Text(_currentValue.toString()),
-      onPressed: () {
-        showModalBottomSheet(
-            isScrollControlled: true,
-            context: context,
-            builder: (BuildContext context) {
-              return SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.75,
-                  child: calc);
-            });
-      },
-    );
+  Color _getButtonColor(String buttonText) {
+    if (buttonText == 'C') {
+      return Colors.brown;
+    } else if (buttonText == '√' ||
+        buttonText == '%' ||
+        buttonText == '÷' ||
+        buttonText == '×' ||
+        buttonText == '-' ||
+        buttonText == '+' ||
+        buttonText == '=' ||
+        buttonText == 'π' ||
+        buttonText == 'e') {
+      return Colors.yellow;
+    } else {
+      return Colors.black;
+    }
   }
 }
+
+final List<String> _buttonNames = [
+  'C',
+  '√',
+  '%',
+  '÷',
+  '7',
+  '8',
+  '9',
+  '×',
+  '4',
+  '5',
+  '6',
+  '-',
+  '1',
+  '2',
+  '3',
+  '+',
+  '0',
+  '.',
+  '±',
+  '=',
+  'π',
+  'e',
+  'x²',
+  'sin',
+  'cos',
+  'tan'
+];
